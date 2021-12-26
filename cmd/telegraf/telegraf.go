@@ -112,6 +112,7 @@ func reloadLoop(
 	inputFilters []string,
 	outputFilters []string,
 ) {
+	// 这里好像可以直接定义为make(chan struct{}, 1)??
 	reload := make(chan bool, 1)
 	reload <- true
 	for <-reload {
@@ -188,6 +189,7 @@ func watchLocalConfig(signals chan os.Signal, fConfig string) {
 		return
 	}
 	mytomb.Done()
+	// 如果有文件变更则发送一个SIGHUP信号(终止进程)
 	signals <- syscall.SIGHUP
 }
 

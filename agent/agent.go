@@ -17,12 +17,12 @@ import (
 	"github.com/influxdata/telegraf/plugins/serializers/influx"
 )
 
-// Agent runs a set of plugins.
+// Agent 运行了很多plugins.
 type Agent struct {
 	Config *config.Config
 }
 
-// NewAgent returns an Agent for the given Config.
+// NewAgent 使用给定config创建Agent
 func NewAgent(config *config.Config) (*Agent, error) {
 	a := &Agent{
 		Config: config,
@@ -30,7 +30,9 @@ func NewAgent(config *config.Config) (*Agent, error) {
 	return a, nil
 }
 
-// inputUnit is a group of input plugins and the shared channel they write to.
+// inputUnit 是一组输出插件和他们写入的共享channel
+// 插件收集各种时间序列性指标，包含各种系统信息和应用信息
+// 文件变更之后会发送SIGHUP信号，达到热更新的效果
 //
 // ┌───────┐
 // │ Input │───┐
@@ -46,6 +48,7 @@ type inputUnit struct {
 	inputs []*models.RunningInput
 }
 
+// Process可以给指标添加，删除，修改tag。不过只是针对当前的指标数据
 //  ______     ┌───────────┐     ______
 // ()_____)──▶ │ Processor │──▶ ()_____)
 //             └───────────┘
@@ -55,10 +58,7 @@ type processorUnit struct {
 	processor *models.RunningProcessor
 }
 
-// aggregatorUnit is a group of Aggregators and their source and sink channels.
-// Typically the aggregators write to a processor channel and pass the original
-// metrics to the output channel.  The sink channels may be the same channel.
-//
+// Aggregate插件要处理的是某段时间流经插件的所有数据
 //                 ┌────────────┐
 //            ┌──▶ │ Aggregator │───┐
 //            │    └────────────┘   │
@@ -77,8 +77,7 @@ type aggregatorUnit struct {
 	aggregators []*models.RunningAggregator
 }
 
-// outputUnit is a group of Outputs and their source channel.  Metrics on the
-// channel are written to all outputs.
+// outputUnit 将收集到的数据处理和聚合之后，输出到数据存储系统(文件，influxdb，各种消息队列)
 //
 //                            ┌────────┐
 //                       ┌──▶ │ Output │
@@ -94,7 +93,7 @@ type outputUnit struct {
 	outputs []*models.RunningOutput
 }
 
-// Run starts and runs the Agent until the context is done.
+// Run在context done之前一直运行.
 func (a *Agent) Run(ctx context.Context) error {
 	log.Printf("I! [agent] Config: Interval:%s, Quiet:%#v, Hostname:%#v, "+
 		"Flush Interval:%s",
@@ -102,6 +101,7 @@ func (a *Agent) Run(ctx context.Context) error {
 		a.Config.Agent.Hostname, time.Duration(a.Config.Agent.FlushInterval))
 
 	log.Printf("D! [agent] Initializing plugins")
+	// 执行插件的初始化(插件已实现telegraf.initializer方法)
 	err := a.initPlugins()
 	if err != nil {
 		return err
@@ -110,6 +110,7 @@ func (a *Agent) Run(ctx context.Context) error {
 	startTime := time.Now()
 
 	log.Printf("D! [agent] Connecting outputs")
+	// 执行connectOutput，返回next用于和不同流程插件数据交互
 	next, ou, err := a.startOutputs(ctx, a.Config.Outputs)
 	if err != nil {
 		return err
@@ -119,7 +120,9 @@ func (a *Agent) Run(ctx context.Context) error {
 	var au *aggregatorUnit
 	if len(a.Config.Aggregators) != 0 {
 		aggC := next
+		// 聚合器级联的processor
 		if len(a.Config.AggProcessors) != 0 {
+			// processors多个插件数据之间是有序的数据交互
 			aggC, apu, err = a.startProcessors(next, a.Config.AggProcessors)
 			if err != nil {
 				return err
@@ -137,6 +140,7 @@ func (a *Agent) Run(ctx context.Context) error {
 		}
 	}
 
+	// 执行插件的初始化
 	iu, err := a.startInputs(next, a.Config.Inputs)
 	if err != nil {
 		return err
@@ -174,6 +178,7 @@ func (a *Agent) Run(ctx context.Context) error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+		// 里面有gatherLoop，可以定时收集数据
 		a.runInputs(ctx, startTime, iu)
 	}()
 
@@ -183,7 +188,7 @@ func (a *Agent) Run(ctx context.Context) error {
 	return err
 }
 
-// initPlugins runs the Init function on plugins.
+// initPlugins 在插件之上运行初始化功能.
 func (a *Agent) initPlugins() error {
 	for _, input := range a.Config.Inputs {
 		err := input.Init()
@@ -432,8 +437,7 @@ func stopRunningOutputs(outputs []*models.RunningOutput) {
 	}
 }
 
-// gather runs an input's gather function periodically until the context is
-// done.
+// gatherLoop 在context done之前周期性的运行input的聚合功能
 func (a *Agent) gatherLoop(
 	ctx context.Context,
 	acc telegraf.Accumulator,
@@ -456,8 +460,7 @@ func (a *Agent) gatherLoop(
 	}
 }
 
-// gatherOnce runs the input's Gather function once, logging a warning each
-// interval it fails to complete before.
+// gatherOnce 运行Gather函数，如果在完成之前失败了则记录一条warn日志
 func (a *Agent) gatherOnce(
 	acc telegraf.Accumulator,
 	input *models.RunningInput,
@@ -466,6 +469,7 @@ func (a *Agent) gatherOnce(
 ) error {
 	done := make(chan error)
 	go func() {
+		// 由plugins提供方实现Gather接口
 		done <- input.Gather(acc)
 	}()
 
@@ -489,8 +493,7 @@ func (a *Agent) gatherOnce(
 	}
 }
 
-// startProcessors sets up the processor chain and calls Start on all
-// processors.  If an error occurs any started processors are Stopped.
+// startProcessors 责任链模式处理，如果有错误就退出
 func (a *Agent) startProcessors(
 	dst chan<- telegraf.Metric,
 	processors models.RunningProcessors,
@@ -578,8 +581,7 @@ func (a *Agent) runAggregators(
 ) {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// Before calling Add, initialize the aggregation window.  This ensures
-	// that any metric created after start time will be aggregated.
+	// start time之后创建的metric都可以被聚合
 	for _, agg := range a.Config.Aggregators {
 		since, until := updateWindow(startTime, a.Config.Agent.RoundInterval, agg.Period())
 		agg.UpdateWindow(since, until)
@@ -622,13 +624,13 @@ func (a *Agent) runAggregators(
 
 	wg.Wait()
 
-	// In the case that there are no processors, both aggC and outputC are the
-	// same channel.  If there are processors, we close the aggC and the
-	// processor chain will close the outputC when it finishes processing.
+	// 无processor-》aggC和outputC是同一个channel，可以直接close
+	// 有processor-》close aggC之后，outputC会在处理完之后close掉
 	close(unit.aggC)
 	log.Printf("D! [agent] Aggregator channel closed")
 }
 
+// updateWindow 更新时间间隔(如果不合规，需要先对齐)
 func updateWindow(start time.Time, roundInterval bool, period time.Duration) (time.Time, time.Time) {
 	var until time.Time
 	if roundInterval {
@@ -700,6 +702,7 @@ func (a *Agent) connectOutput(ctx context.Context, output *models.RunningOutput)
 		log.Printf("E! [agent] Failed to connect to [%s], retrying in 15s, "+
 			"error was '%s'", output.LogName(), err)
 
+		// try
 		err := internal.SleepContext(ctx, 15*time.Second)
 		if err != nil {
 			return err
@@ -735,6 +738,7 @@ func (a *Agent) runOutputs(
 			interval = output.Config.FlushInterval
 		}
 
+		// TODO：为啥要用一个变量，看着好晕啊
 		jitter := jitter
 		// Overwrite agent flush_jitter if this plugin has its own.
 		if output.Config.FlushJitter != 0 {

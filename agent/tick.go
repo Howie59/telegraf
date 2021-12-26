@@ -28,6 +28,7 @@ type Ticker interface {
 // The implementation currently does not recalculate until the next tick with
 // no maximum sleep, when using large intervals alignment is not corrected
 // until the next tick.
+// AlignedTicker 用于设置对齐的ticker
 type AlignedTicker struct {
 	interval    time.Duration
 	jitter      time.Duration
@@ -115,6 +116,7 @@ func (t *AlignedTicker) Stop() {
 // The first tick is emitted immediately.
 //
 // Ticks are dropped for slow consumers.
+// 普通的ticker
 type UnalignedTicker struct {
 	interval time.Duration
 	jitter   time.Duration

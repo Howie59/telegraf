@@ -40,6 +40,7 @@ func New(
 		tp:     vtype,
 	}
 
+	// TODO：这里为啥要sort一下？
 	if len(tags) > 0 {
 		m.tags = make([]*telegraf.Tag, 0, len(tags))
 		for k, v := range tags {

@@ -1,8 +1,6 @@
 package telegraf
 
-// Processor is a processor plugin interface for defining new inline processors.
-// these are extremely efficient and should be used over StreamingProcessor if
-// you do not need asynchronous metric writes.
+// Processor可以定义新的内联processors。如果你不需要异步写metrics，这些非常有效
 type Processor interface {
 	PluginDescriber
 
@@ -10,7 +8,7 @@ type Processor interface {
 	Apply(in ...Metric) []Metric
 }
 
-// StreamingProcessor is a processor that can take in a stream of messages
+// StreamingProcessor处理流式消息
 type StreamingProcessor interface {
 	PluginDescriber
 

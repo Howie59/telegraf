@@ -12,9 +12,7 @@ type DeprecationInfo struct {
 	Notice string
 }
 
-// Initializer is an interface that all plugin types: Inputs, Outputs,
-// Processors, and Aggregators can optionally implement to initialize the
-// plugin.
+// Initializer 为插件初始化接口
 type Initializer interface {
 	// Init performs one time setup of the plugin and returns an error if the
 	// configuration is invalid.
@@ -26,10 +24,10 @@ type Initializer interface {
 // not part of the interface, but will receive an injected logger if it's set.
 // eg: Log telegraf.Logger `toml:"-"`
 type PluginDescriber interface {
-	// SampleConfig returns the default configuration of the Processor
+	// SampleConfig 返回插件的默认配置
 	SampleConfig() string
 
-	// Description returns a one-sentence description on the Processor
+	// Description 插件的说明
 	Description() string
 }
 

@@ -1,8 +1,5 @@
-// Package selfstat is a package for tracking and collecting internal statistics
-// about telegraf. Metrics can be registered using this package, and then
-// incremented or set within your code. If the inputs.internal plugin is enabled,
-// then all registered stats will be collected as they would by any other input
-// plugin.
+// Package selfstat 可以追踪&&收集telegraf内部统计数据
+// 如果inputs.internal插件启用了，所有注册过的stats会被收集上来
 package selfstat
 
 import (
@@ -19,8 +16,7 @@ var (
 	registry *Registry
 )
 
-// Stat is an interface for dealing with telegraf statistics collected
-// on itself.
+// Stat 为处理自己数据的接口
 type Stat interface {
 	// Name is the name of the measurement
 	Name() string
@@ -28,7 +24,7 @@ type Stat interface {
 	// FieldName is the name of the measurement field
 	FieldName() string
 
-	// Tags is a tag map. Each time this is called a new map is allocated.
+	// Tags 是一个tag的map。每次被调用都会分配一个新的map
 	Tags() map[string]string
 
 	// Incr increments a regular stat by 'v'.

@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// Accumulator allows adding metrics to the processing flow.
+// Accumulator 允许往处理流中添加metrics
 type Accumulator interface {
 	// AddFields adds a metric to the accumulator with the given measurement
 	// name, fields, and tags (and timestamp). If a timestamp is not provided,
@@ -54,10 +54,10 @@ type Accumulator interface {
 	WithTracking(maxTracked int) TrackingAccumulator
 }
 
-// TrackingID uniquely identifies a tracked metric group
+// TrackingID 唯一标识一个追踪的metric组
 type TrackingID uint64
 
-// DeliveryInfo provides the results of a delivered metric group.
+// DeliveryInfo 返回交付后的结果
 type DeliveryInfo interface {
 	// ID is the TrackingID
 	ID() TrackingID
@@ -66,10 +66,7 @@ type DeliveryInfo interface {
 	Delivered() bool
 }
 
-// TrackingAccumulator is an Accumulator that provides a signal when the
-// metric has been fully processed.  Sending more metrics than the accumulator
-// has been allocated for without reading status from the Accepted or Rejected
-// channels is an error.
+// TrackingAccumulator 在metric处理完成后提供一个signal机制
 type TrackingAccumulator interface {
 	Accumulator
 

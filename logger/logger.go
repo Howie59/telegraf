@@ -34,6 +34,7 @@ type LogConfig struct {
 	// logger will fallback to stderr
 	Logfile string
 	// will rotate when current file at the specified time interval
+	// TODO：循环写？？
 	RotationInterval config.Duration
 	// will rotate when current file size exceeds this parameter.
 	RotationMaxSize config.Size

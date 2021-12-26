@@ -79,6 +79,7 @@ func (r *RunningInput) LogName() string {
 
 func (r *RunningInput) Init() error {
 	if p, ok := r.Input.(telegraf.Initializer); ok {
+		// 调用具体插件的init方法
 		err := p.Init()
 		if err != nil {
 			return err

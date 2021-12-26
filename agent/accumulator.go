@@ -7,6 +7,7 @@ import (
 	"github.com/influxdata/telegraf/metric"
 )
 
+// input，processor, aggregate功能的接口
 type MetricMaker interface {
 	LogName() string
 	MakeMetric(metric telegraf.Metric) telegraf.Metric
@@ -77,7 +78,9 @@ func (ac *accumulator) AddHistogram(
 }
 
 func (ac *accumulator) AddMetric(m telegraf.Metric) {
+	// 设置time
 	m.SetTime(m.Time().Round(ac.precision))
+	// 构造metrics，然后放到channel中
 	if m := ac.maker.MakeMetric(m); m != nil {
 		ac.metrics <- m
 	}
