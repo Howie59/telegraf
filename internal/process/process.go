@@ -186,5 +186,6 @@ func isQuitting(ctx context.Context) bool {
 }
 
 func defaultReadPipe(r io.Reader) {
+	// Discard 是io.Writer接口，调用它的write方法将不做任何事情并始终返回成功(垃圾桶)
 	_, _ = io.Copy(io.Discard, r)
 }

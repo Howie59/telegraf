@@ -34,6 +34,7 @@ func (r *rateLimiter) Stop() {
 	close(r.C)
 }
 
+// ticker.C时间内放行counter个请求，这个限流的实现还挺有意思
 func (r *rateLimiter) limiter() {
 	defer r.wg.Done()
 	ticker := time.NewTicker(r.rate)

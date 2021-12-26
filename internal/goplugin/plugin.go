@@ -12,8 +12,7 @@ import (
 	"strings"
 )
 
-// loadExternalPlugins loads external plugins from shared libraries (.so, .dll, etc.)
-// in the specified directory.
+// loadExternalPlugins 从指定路径下共享库中加载额外的插件(ilogtail中也有类似的机制)
 func LoadExternalPlugins(rootDir string) error {
 	return filepath.Walk(rootDir, func(pth string, info os.FileInfo, err error) error {
 		// Stop if there was an error.
