@@ -1,6 +1,6 @@
 package telegraf
 
-// Processor可以定义新的内联processors。如果你不需要异步写metrics，这些非常有效
+// Processor 可以定义新的内联processors。如果你不需要异步写metrics，这些非常有效
 type Processor interface {
 	PluginDescriber
 
@@ -8,7 +8,7 @@ type Processor interface {
 	Apply(in ...Metric) []Metric
 }
 
-// StreamingProcessor处理流式消息
+// StreamingProcessor 处理流式消息
 type StreamingProcessor interface {
 	PluginDescriber
 

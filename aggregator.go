@@ -1,6 +1,6 @@
 package telegraf
 
-// Aggregator插件会对一段时间内的指标进行聚合/计算，然后产生新的指标输出。可以计算最大值，最小值，均值，标准差等。
+// Aggregator 插件会对一段时间内的指标进行聚合/计算，然后产生新的指标输出。可以计算最大值，最小值，均值，标准差等。
 // 插件可以指定对应的原始指标项是否抛弃，通过Add方法的返回值实现。插件的接口比较多，telegraf会保证不会并发执行
 // 运行在Processor插件之后，在聚合完成之后，telegraf会让新产生的指标重新过一遍Processor插件
 type Aggregator interface {
